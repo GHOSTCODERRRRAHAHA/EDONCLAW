@@ -177,7 +177,14 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
     defaultRuntime.exit(1);
     return;
   }
-  const bindRaw = toOptionString(opts.bind) ?? cfg.gateway?.bind ?? "loopback";
+  // Env fallback for Docker/Fly where CLI --bind may not reach the run subcommand
+  const envBind = process.env.OPENCLAW_GATEWAY_BIND?.trim().toLowerCase();
+  const envBindValid =
+    envBind === "loopback" || envBind === "lan" || envBind === "auto" || envBind === "custom" || envBind === "tailnet"
+      ? envBind
+      : undefined;
+  const bindRaw =
+    toOptionString(opts.bind) ?? cfg.gateway?.bind ?? envBindValid ?? "loopback";
   const bind =
     bindRaw === "loopback" ||
     bindRaw === "lan" ||
