@@ -34,15 +34,22 @@ ENV NODE_ENV=production
 # Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
 
+# Writable state dir for gateway (lock, sessions, etc.) when running as node user
+RUN mkdir -p /app/state && chown -R node:node /app/state
+
 # Security hardening: Run as non-root user
 # The node:22-bookworm image includes a 'node' user (uid 1000)
 # This reduces the attack surface by preventing container escape via root privileges
 USER node
 
-# Start gateway server with default config.
-# Binds to loopback (127.0.0.1) by default for security.
-#
-# For container platforms requiring external health checks:
-#   1. Set OPENCLAW_GATEWAY_TOKEN or OPENCLAW_GATEWAY_PASSWORD env var
-#   2. Override CMD: ["node","dist/index.js","gateway","--allow-unconfigured","--bind","lan"]
-CMD ["node", "dist/index.js", "gateway", "--allow-unconfigured"]
+# Fly/container: must listen on 0.0.0.0:8080 so fly-proxy can reach the app.
+# OpenClaw gateway exposes /tools/invoke (EDON Gateway calls this for Telegram bot).
+# Set OPENCLAW_GATEWAY_TOKEN on Fly; --bind lan = listen on 0.0.0.0.
+# OPENCLAW_STATE_DIR so gateway lock/config paths are writable (no reliance on $HOME).
+# OPENCLAW_ALLOW_UNCONFIGURED_GATEWAY=1 so gateway starts without a config file (CLI --allow-unconfigured may not reach run subcommand).
+ENV PORT=8080
+ENV OPENCLAW_STATE_DIR=/app/state
+ENV OPENCLAW_ALLOW_UNCONFIGURED_GATEWAY=1
+EXPOSE 8080
+# Shell form so startup is logged; exec keeps node as PID 1 for signals
+CMD exec node dist/index.js gateway run --allow-unconfigured --port 8080 --bind lan

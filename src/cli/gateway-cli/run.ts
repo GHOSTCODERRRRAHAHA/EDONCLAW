@@ -161,7 +161,10 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
   const snapshot = await readConfigFileSnapshot().catch(() => null);
   const configExists = snapshot?.exists ?? fs.existsSync(CONFIG_PATH);
   const mode = cfg.gateway?.mode;
-  if (!opts.allowUnconfigured && mode !== "local") {
+  // Env fallback for Docker/Fly where CLI option may not reach the run subcommand
+  const allowUnconfigured =
+    Boolean(opts.allowUnconfigured) || process.env.OPENCLAW_ALLOW_UNCONFIGURED_GATEWAY === "1";
+  if (!allowUnconfigured && mode !== "local") {
     if (!configExists) {
       defaultRuntime.error(
         `Missing config. Run \`${formatCliCommand("openclaw setup")}\` or set gateway.mode=local (or pass --allow-unconfigured).`,
