@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import express from "express"; // <-- add this import
+
 import { getReplyFromConfig } from "./auto-reply/reply.js";
 import { applyTemplate } from "./auto-reply/templating.js";
 import { monitorWebChannel } from "./channel-web.js";
@@ -78,7 +80,6 @@ const isMain = isMainModule({
 
 if (isMain) {
   // Global error handlers to prevent silent crashes from unhandled rejections/exceptions.
-  // These log the error and exit gracefully instead of crashing without trace.
   installUnhandledRejectionHandler();
 
   process.on("uncaughtException", (error) => {
@@ -89,5 +90,24 @@ if (isMain) {
   void program.parseAsync(process.argv).catch((err) => {
     console.error("[openclaw] CLI failed:", formatUncaughtError(err));
     process.exit(1);
+  });
+
+  // ------------------------------
+  // NEW: HTTP server for Fly
+  // ------------------------------
+  const app = express();
+  const PORT = process.env.PORT || 8080;
+  const HOST = "0.0.0.0";
+
+  app.get("/", (req, res) => {
+    res.json({
+      status: "EDON Claw Gateway is alive!",
+      OPENCLAW_GATEWAY_TOKEN_set: !!process.env.OPENCLAW_GATEWAY_TOKEN,
+    });
+  });
+
+  app.listen(PORT, HOST, () => {
+    console.log(`[openclaw] HTTP server listening on ${HOST}:${PORT}`);
+    console.log("[openclaw] OPENCLAW_GATEWAY_TOKEN set?", !!process.env.OPENCLAW_GATEWAY_TOKEN);
   });
 }
