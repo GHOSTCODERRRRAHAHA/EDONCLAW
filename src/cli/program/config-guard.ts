@@ -17,6 +17,7 @@ const ALLOWED_INVALID_GATEWAY_SUBCOMMANDS = new Set([
   "start",
   "stop",
   "restart",
+  "run", // allow in Docker/headless when no config file (--allow-unconfigured)
 ]);
 let didRunDoctorConfigFlow = false;
 

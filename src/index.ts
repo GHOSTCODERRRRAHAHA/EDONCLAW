@@ -92,22 +92,24 @@ if (isMain) {
     process.exit(1);
   });
 
-  // ------------------------------
-  // NEW: HTTP server for Fly
-  // ------------------------------
-  const app = express();
-  const PORT = process.env.PORT || 8080;
-  const HOST = "0.0.0.0";
-
-  app.get("/", (req, res) => {
-    res.json({
-      status: "EDON Claw Gateway is alive!",
-      OPENCLAW_GATEWAY_TOKEN_set: !!process.env.OPENCLAW_GATEWAY_TOKEN,
+  // When running "gateway run", the gateway subcommand starts its own HTTP server on PORT
+  // (including /tools/invoke). Do not start the Express app or we'd get EADDRINUSE.
+  const argv = process.argv.slice(2);
+  const isGatewayRun = argv[0] === "gateway" && argv[1] === "run";
+  if (!isGatewayRun) {
+    // Lightweight HTTP server for Fly when not using "gateway run" (e.g. other commands).
+    const app = express();
+    const PORT = process.env.PORT || 8080;
+    const HOST = "0.0.0.0";
+    app.get("/", (req, res) => {
+      res.json({
+        status: "EDON Claw Gateway is alive!",
+        OPENCLAW_GATEWAY_TOKEN_set: !!process.env.OPENCLAW_GATEWAY_TOKEN,
+      });
     });
-  });
-
-  app.listen(PORT, HOST, () => {
-    console.log(`[openclaw] HTTP server listening on ${HOST}:${PORT}`);
-    console.log("[openclaw] OPENCLAW_GATEWAY_TOKEN set?", !!process.env.OPENCLAW_GATEWAY_TOKEN);
-  });
+    app.listen(PORT, HOST, () => {
+      console.log(`[openclaw] HTTP server listening on ${HOST}:${PORT}`);
+      console.log("[openclaw] OPENCLAW_GATEWAY_TOKEN set?", !!process.env.OPENCLAW_GATEWAY_TOKEN);
+    });
+  }
 }
