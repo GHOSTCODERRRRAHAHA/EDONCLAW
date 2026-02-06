@@ -1,4 +1,5 @@
 FROM node:22-bookworm
+ENV NODE_OPTIONS="--max-old-space-size=1536"
 
 # Install Bun (required for build scripts)
 RUN curl -fsSL https://bun.sh/install | bash
@@ -48,13 +49,11 @@ USER node
 # OPENCLAW_STATE_DIR so gateway lock/config paths are writable (no reliance on $HOME).
 # OPENCLAW_ALLOW_UNCONFIGURED_GATEWAY=1 so gateway starts without a config file (CLI --allow-unconfigured may not reach run subcommand).
 # OPENCLAW_GATEWAY_PORT / OPENCLAW_GATEWAY_BIND so Fly sees the app on 0.0.0.0:8080 (CLI --port/--bind may not reach run subcommand).
-# NODE_OPTIONS: allow 768MB heap so gateway startup fits in Fly 1GB VM (default heap limit can be lower and cause OOM).
 ENV PORT=8080
 ENV OPENCLAW_STATE_DIR=/app/state
 ENV OPENCLAW_ALLOW_UNCONFIGURED_GATEWAY=1
 ENV OPENCLAW_GATEWAY_PORT=8080
 ENV OPENCLAW_GATEWAY_BIND=lan
-ENV NODE_OPTIONS="--max-old-space-size=768"
 EXPOSE 8080
 # Shell form so startup is logged; exec keeps node as PID 1 for signals
 CMD exec node dist/index.js gateway run --allow-unconfigured --port 8080 --bind lan
