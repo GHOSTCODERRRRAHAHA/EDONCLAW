@@ -55,5 +55,5 @@ ENV OPENCLAW_ALLOW_UNCONFIGURED_GATEWAY=1
 ENV OPENCLAW_GATEWAY_PORT=8080
 ENV OPENCLAW_GATEWAY_BIND=lan
 EXPOSE 8080
-# Shell form so startup is logged; exec keeps node as PID 1 for signals
-CMD exec node dist/index.js gateway run --allow-unconfigured --port 8080 --bind lan
+# Tiny HTTP server on 8080 for Fly (/health, /); gateway runs on 18789, other paths proxied
+CMD exec node scripts/fly-health-server.js
