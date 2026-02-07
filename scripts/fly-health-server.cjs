@@ -4,7 +4,7 @@
 /**
  * Minimal HTTP server on 8080 for Fly.io: responds to /health and / so fly-proxy
  * gets a valid HTTP response. Proxies all other paths to the OpenClaw gateway (18789).
- * Run with: node scripts/fly-health-server.js
+ * Run with: node scripts/fly-health-server.cjs
  */
 
 const http = require("http");
@@ -48,12 +48,25 @@ healthServer.listen(HEALTH_PORT, "0.0.0.0", () => {
 });
 
 // Spawn gateway on 18789 (so 8080 is free for this server)
-const env = { ...process.env, OPENCLAW_GATEWAY_PORT: String(GATEWAY_PORT), OPENCLAW_GATEWAY_BIND: "loopback" };
-const gateway = spawn("node", ["dist/index.js", "gateway", "run", "--allow-unconfigured", "--port", String(GATEWAY_PORT), "--bind", "loopback"], {
-  cwd: process.cwd(),
-  env,
-  stdio: "inherit",
-});
+const env = {
+  ...process.env,
+  OPENCLAW_GATEWAY_PORT: String(GATEWAY_PORT),
+  OPENCLAW_GATEWAY_BIND: "loopback",
+};
+const gateway = spawn(
+  "node",
+  [
+    "dist/index.js",
+    "gateway",
+    "run",
+    "--allow-unconfigured",
+    "--port",
+    String(GATEWAY_PORT),
+    "--bind",
+    "loopback",
+  ],
+  { cwd: process.cwd(), env, stdio: "inherit" }
+);
 gateway.on("error", (err) => {
   console.error("[fly-health] gateway spawn error:", err);
   process.exit(1);

@@ -56,4 +56,4 @@ ENV OPENCLAW_GATEWAY_PORT=8080
 ENV OPENCLAW_GATEWAY_BIND=lan
 EXPOSE 8080
 # Tiny HTTP server on 8080 for Fly (/health, /); gateway runs on 18789, other paths proxied
-CMD exec node scripts/fly-health-server.js
+CMD exec node scripts/fly-health-server.cjs
